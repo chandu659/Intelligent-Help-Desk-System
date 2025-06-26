@@ -1,0 +1,34 @@
+# .venv
+.venv/
+myvenv/
+env/
+.env.local
+
+# Virtual environment
+venv/
+venv
+
+# IDE
+.idea/
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints
+
+# System
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*~
+*#
+
+__pycache__
+__pycache__/
+
+.pytest_cache
+.pytest_cache/
+
+.env
+.env.local
+.env.sample

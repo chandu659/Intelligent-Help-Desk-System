@@ -1,0 +1,159 @@
+[
+  {
+    "text": "",
+    "metadata": {
+      "source": "knowledge_base",
+      "section": "IT Support Knowledge Base",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "- Passwords must be minimum 8 characters with mixed case, numbers, and symbols\n- Password reset can be performed through self-service portal at company.com/reset\n- Account lockout occurs after 5 failed login attempts\n- Contact IT support if account remains locked after successful reset\n",
+    "metadata": {
+      "source": "knowledge_base",
+      "section": "Password Management",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "- All software must be downloaded from approved vendor websites\n- Administrator privileges required for most installations\n- Temporarily disable antivirus during installation if installation fails\n- Clear browser cache and temp files if downloads are corrupted\n- Contact your manager for approval of new software not in approved list\n",
+    "metadata": {
+      "source": "knowledge_base",
+      "section": "Software Installation Issues",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "- Check physical cable connections first\n- Restart network adapter in Device Manager\n- Try connecting to guest network to isolate issue\n- Update network drivers if connection is unstable\n- VPN issues: check server status page or contact network team\n",
+    "metadata": {
+      "source": "knowledge_base",
+      "section": "Network Connectivity Problems",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "- Use IMAP settings: server mail.company.com, port 993, SSL enabled\n- SMTP settings: server smtp.company.com, port 587, TLS enabled\n- Check spam folder if not receiving expected emails\n- Mailbox storage limit is 10GB - archive old emails if full\n- Contact email admin for distribution list changes\n",
+    "metadata": {
+      "source": "knowledge_base",
+      "section": "Email Configuration",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "- Report hardware failures immediately to prevent data loss\n- Do not attempt repairs on laptops or monitors yourself\n- Backup important data before reporting hardware issues\n- Standard hardware replacement time is 2-3 business days\n- Temporary equipment available for critical business needs",
+    "metadata": {
+      "source": "knowledge_base",
+      "section": "Hardware Support",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "",
+    "metadata": {
+      "source": "company_policies",
+      "section": "TechCorp Inc. IT Policies and Procedures",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "- Minimum 12 characters with uppercase, lowercase, numbers, and symbols\n- Passwords must be changed every 90 days\n- Cannot reuse last 5 passwords\n- Account locked after 5 failed attempts\n- Password reset requires manager approval for privileged accounts\n",
+    "metadata": {
+      "source": "company_policies",
+      "section": "Password Policy",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "- Only approved software from IT catalog can be installed\n- Business software requires department head approval\n- Development tools require CTO approval\n- All software must pass security review\n- Personal software prohibited on company devices\n",
+    "metadata": {
+      "source": "company_policies",
+      "section": "Software Installation Policy",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "1. Submit request through IT portal with business justification\n2. Manager approval required for requests >$1000\n3. IT team reviews compatibility and security\n4. Procurement processes order within 5-7 business days\n5. Device setup and deployment within 2 business days of arrival\n",
+    "metadata": {
+      "source": "company_policies",
+      "section": "Hardware Request Process",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "- VPN connection required for all company resource access\n- Encrypted hard drives mandatory\n- Automatic screen lock after 5 minutes\n- Company-managed antivirus required\n- Personal use limited to lunch breaks and after hours\n",
+    "metadata": {
+      "source": "company_policies",
+      "section": "Remote Work IT Requirements",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "- Report security incidents to security@techcorp.com immediately\n- Do not attempt to fix security issues yourself\n- Preserve evidence - do not delete files or reset systems\n- Coordinate with IT security team for investigation\n- Document all steps taken and timeline of events",
+    "metadata": {
+      "source": "company_policies",
+      "section": "Security Incident Response",
+      "chunk_id": 0
+    }
+  },
+  {
+    "text": "Issue: password_reset\nCategory: Authentication\n\nSteps:\n1. Go to https://password.techcorp.com\n2. Enter your company email address\n3. Check email for reset link (check spam folder)\n4. Click link and create new password following policy\n5. Update password in all saved locations (browsers, mobile apps)\n6. Test login on primary work applications\n\nEscalation Trigger: Multiple failed reset attempts or account lockout\nEscalation Contact: security@techcorp.com",
+    "metadata": {
+      "source": "troubleshooting_db",
+      "issue": "password_reset",
+      "category": "Authentication"
+    }
+  },
+  {
+    "text": "Issue: slow_computer\nCategory: Performance\n\nSteps:\n1. Check if Windows updates are running in background\n2. Close unnecessary applications and browser tabs\n3. Restart the computer to clear memory\n4. Check available disk space (need >10% free)\n5. Run Windows built-in disk cleanup tool\n6. Check Task Manager for high CPU/memory usage processes\n\nEscalation Trigger: Performance issues persist after basic troubleshooting\nEscalation Contact: hardware-support@techcorp.com",
+    "metadata": {
+      "source": "troubleshooting_db",
+      "issue": "slow_computer",
+      "category": "Performance"
+    }
+  },
+  {
+    "text": "Issue: wifi_connection\nCategory: Network\n\nSteps:\n1. Check if WiFi is enabled on device\n2. Forget and reconnect to TechCorp-WiFi network\n3. Try connecting to TechCorp-Guest to test hardware\n4. Restart network adapter in Device Manager\n5. Update WiFi driver if available\n6. Try ethernet connection to isolate WiFi issue\n\nEscalation Trigger: Unable to connect with any network or ethernet\nEscalation Contact: network-support@techcorp.com",
+    "metadata": {
+      "source": "troubleshooting_db",
+      "issue": "wifi_connection",
+      "category": "Network"
+    }
+  },
+  {
+    "text": "Issue: email_not_syncing\nCategory: Email\n\nSteps:\n1. Check internet connectivity\n2. Verify Outlook is online (not in offline mode)\n3. Send/Receive all folders manually\n4. Check account settings for correct server configuration\n5. Disable and re-enable the email account\n6. Create new Outlook profile if issues persist\n\nEscalation Trigger: Email account configuration errors or server connectivity issues\nEscalation Contact: email-support@techcorp.com",
+    "metadata": {
+      "source": "troubleshooting_db",
+      "issue": "email_not_syncing",
+      "category": "Email"
+    }
+  },
+  {
+    "text": "Issue: software_installation_failed\nCategory: Software\n\nSteps:\n1. Run installer as administrator\n2. Temporarily disable antivirus during installation\n3. Check if similar software is already installed (uninstall first)\n4. Clear Windows temp files and restart\n5. Download fresh installer file\n6. Check system requirements match software needs\n\nEscalation Trigger: Installation fails due to system compatibility or requires admin privileges\nEscalation Contact: software-support@techcorp.com",
+    "metadata": {
+      "source": "troubleshooting_db",
+      "issue": "software_installation_failed",
+      "category": "Software"
+    }
+  },
+  {
+    "text": "Software: slack\nTitle: Installing Slack Desktop App\n\nInstallation Steps:\n1. Download Slack from https://slack.com/downloads\n2. Run the installer with administrator privileges\n3. Sign in with your @techcorp.com email address\n4. Join the #general and #it-support channels\n5. Enable desktop notifications for mentions\n6. Set status to show your working hours\n\nCommon Issues:\nIssue: Cannot sign in with company email\nSolution: Check with IT - your account may not be provisioned yet\n\nIssue: Notifications not working\nSolution: Check Windows notification settings and Slack notification preferences\n\n\nSupport Contact: it-support@techcorp.com",
+    "metadata": {
+      "source": "installation_guides",
+      "software": "slack"
+    }
+  },
+  {
+    "text": "Software: office365\nTitle: Setting up Microsoft Office 365\n\nInstallation Steps:\n1. Go to portal.office.com\n2. Sign in with your company credentials (firstname.lastname@techcorp.com)\n3. Download and install Office apps from the portal\n4. Activate with your company license\n5. Set up Outlook with company email\n6. Connect OneDrive for file sync\n\nCommon Issues:\nIssue: License activation failed\nSolution: Ensure you're signed in with company account, not personal Microsoft account\n\nIssue: Outlook not syncing emails\nSolution: Check network connection and verify Exchange server settings\n\n\nSupport Contact: it-support@techcorp.com",
+    "metadata": {
+      "source": "installation_guides",
+      "software": "office365"
+    }
+  },
+  {
+    "text": "Software: vpn\nTitle: Installing Company VPN (Cisco AnyConnect)\n\nInstallation Steps:\n1. Download Cisco AnyConnect from IT portal\n2. Install with administrator rights\n3. Enter server address: vpn.techcorp.com\n4. Use your company username and password\n5. Enable auto-connect for company networks\n6. Test connection to internal resources\n\nCommon Issues:\nIssue: Cannot connect to VPN server\nSolution: Check internet connection and contact IT if server is down\n\nIssue: VPN connects but cannot access internal sites\nSolution: Try disconnecting and reconnecting, or contact IT for routing issues\n\n\nSupport Contact: it-support@techcorp.com",
+    "metadata": {
+      "source": "installation_guides",
+      "software": "vpn"
+    }
+  }
+]
