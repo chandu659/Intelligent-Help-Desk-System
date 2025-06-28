@@ -68,7 +68,7 @@ class ResponseGenerator:
         
         # Format category information
         category_description = category_details.get("description", "")
-        resolution_time = category_details.get("typical_resolution_time", "unknown")
+        #resolution_time = category_details.get("typical_resolution_time", "unknown")
         
         # Extract key information from retrieved documents to guide response
         key_topics = set()
@@ -147,23 +147,22 @@ class ResponseGenerator:
             {retrieved_sections}
             **Relevant Topics from Knowledge Base**: {response_elements}
             **Issue Escalated**: {escalated}
-
-            **Company Policies**:
-            - Only approved software from the IT catalog can be installed.
-            - Software installation requires department head approval.
-            - Personal software is prohibited on company devices.{contact_policy}
+            {contact_policy}
 
             **Instructions**:
             1. Generate a response that is concise (100-150 words max) and directly addresses the user's request.
-            2. Base your answer STRICTLY on the retrieved knowledge and address the relevant topics where applicable: {response_elements}.
+            2. Base your answer STRICTLY on the {retrieved_sections} and address the relevant topics where applicable: {response_elements}.
             3. Use the relevant knowledge to provide specific, actionable steps or contacts.
-            4. DO NOT invent, create, or include ANY information not explicitly mentioned in the retrieved knowledge.
-            5. DO NOT include phone numbers, URLs, or contact details that are not explicitly mentioned in the retrieved knowledge.
-            6. If the knowledge is insufficient, acknowledge the limitations without making up information.
-            7. Ensure the response complies with the listed company policies.
-            8. Format the response with a brief introduction, bullet-pointed steps or instructions, and a brief closing statement. DO NOT include resolution time in your response.
-            9. Use a professional and friendly tone.
-            10. Avoid redundancy - do not repeat the same information multiple times in your response.{escalation_instruction}
+            4. DO NOT reveal that you are using internal knowledge or a knowledge base. Never use phrases like "Based on our knowledge", "According to our database", "Our knowledge base indicates", etc.
+            5. DO NOT invent, create, or include ANY information not explicitly mentioned in the {retrieved_sections}.
+            6. DO NOT include phone numbers, URLs, or contact details that are not explicitly mentioned in the {retrieved_sections}.
+            7. If the knowledge is insufficient, acknowledge the limitations without making up information.
+            8. Ensure the response complies with the listed company policies.
+            9. Format the response with a short introduction, bullet-pointed steps, and a short closing note, with saying please feel free to ask if you have any questions. DO NOT include resolution time in your response.
+            10. Use a professional and friendly tone.
+            11. Avoid redundancy - do not repeat the same information multiple times in your response.
+            12. Present all information as direct advice without referencing how you obtained the information.{escalation_instruction}
+            13. Before giving the final response evaluate the response for accuracy and completeness, with {retrieved_sections}.
 
             **Response**:"""
         
