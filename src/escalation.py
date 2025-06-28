@@ -32,28 +32,49 @@ class EscalationHandler:
         request: str,
         category: str,
         category_details: Dict[str, Any],
-        confidence: float
+        confidence: float,
+        retrieved_docs: List = None
     ) -> Tuple[bool, str]:
         """
-        Determine if a request should be escalated based on category, confidence, and triggers.
+        Determine if a request should be escalated based on retrieved knowledge content, triggers, and confidence scores.
         
         Args:
             request: User request
             category: Classified category
             category_details: Details about the category
             confidence: Classification confidence score
+            retrieved_docs: Retrieved knowledge documents
             
         Returns:
             Tuple[bool, str]: Escalation decision and reason
         """
-        # Check if confidence is below threshold
-        if confidence < self.threshold:
-            reason = f"Low classification confidence ({confidence:.2f} < {self.threshold})"
-            logger.info(f"Escalating request due to {reason}")
-            return True, reason
+        # First check if we have relevant knowledge base content with good similarity scores
+        has_relevant_content = False
+        best_similarity = 0.0
+        best_doc_source = ""
+        best_doc_section = ""
         
-        # Check category-specific automatic escalation
-        if category in ["hardware_failure", "security_incident"]:
+        if retrieved_docs:
+            for doc in retrieved_docs:
+                similarity = doc.metadata.get("similarity_score", 0)
+                if similarity > best_similarity:
+                    best_similarity = similarity
+                    best_doc_source = doc.metadata.get("source", "unknown")
+                    best_doc_section = doc.metadata.get("section", "")
+                    
+            # If we have good quality matches, log them
+            if best_similarity > 0.3:
+                has_relevant_content = True
+                logger.info(f"Found relevant content for {category} with similarity score {best_similarity:.4f} from {best_doc_source} - {best_doc_section}")
+        
+        # Check for category-specific automatic escalation
+        # Some categories always require escalation regardless of content
+        if category == "security_incident":
+            reason = "Security incident requires escalation to security team"
+            logger.info(f"Escalating security_incident request to Security Response Team")
+            return True, reason
+            
+        if category == "hardware_failure":
             reason = f"Automatic escalation for category: {category}"
             logger.info(f"Escalating request due to {reason}")
             return True, reason
@@ -76,6 +97,18 @@ class EscalationHandler:
                 reason = f"Urgency indicator detected: {indicator}"
                 logger.info(f"Escalating request due to {reason}")
                 return True, reason
+        
+        # If we have relevant content with good similarity, use it instead of escalating
+        # This applies to all categories, not just specific ones
+        if has_relevant_content and best_similarity > 0.3:
+            logger.info(f"Not escalating {category} issue despite confidence {confidence:.2f} as we have relevant knowledge base content with similarity {best_similarity:.4f}")
+            return False, f"No escalation needed - using knowledge base content from {best_doc_source}"
+        
+        # Only check confidence threshold last, after all other escalation criteria
+        if confidence < self.threshold:
+            reason = f"Low classification confidence ({confidence:.2f} < {self.threshold}) and no relevant knowledge base content found"
+            logger.info(f"Escalating request due to {reason}")
+            return True, reason
         
         # No escalation needed
         logger.debug(f"No escalation needed for request: {request[:50]}...")
@@ -116,44 +149,47 @@ class EscalationHandler:
         Returns:
             str: Escalation message
         """
-        # Map categories to specialized teams and their contact information
-        category_to_team = {
-            "hardware_failure": {
-                "name": "Hardware Support Team",
-                "contact": "hardware-support@company.com"
-            },
-            "security_incident": {
-                "name": "Security Response Team",
-                "contact": "security-incidents@company.com"
-            },
-            "network_connectivity": {
-                "name": "Network Operations Team",
-                "contact": "network-ops@company.com"
-            },
-            "software_installation": {
-                "name": "Software Support Team",
-                "contact": "software-support@company.com"
-            },
-            "email_configuration": {
-                "name": "Email Administration Team",
-                "contact": "email-admin@company.com"
-            },
-            "password_reset": {
-                "name": "Account Security Team",
-                "contact": "account-security@company.com"
-            },
-            "policy_question": {
-                "name": "IT Policy Team",
-                "contact": "it-policy@company.com"
-            }
+        # Use real data from troubleshooting_database.json
+        # These are the actual escalation contacts from the knowledge base
+        category_to_contact = {
+            "password_reset": "security@techcorp.com",
+            "hardware_failure": "hardware-support@techcorp.com",
+            "network_connectivity": "network-support@techcorp.com", 
+            "email_configuration": "email-support@techcorp.com",
+            "software_installation": "software-support@techcorp.com",
+            "security_incident": "security@techcorp.com",
+            "policy_question": "it-policy@techcorp.com"
         }
         
-        team_info = category_to_team.get(category, {"name": "IT Support Team", "contact": "it-support@company.com"})
-        team_name = team_info["name"]
-        team_contact = team_info["contact"]
+        # Map categories to team names based on categories.json
+        category_to_team = {
+            "password_reset": "Account Security Team",
+            "hardware_failure": "Hardware Support Team",
+            "network_connectivity": "Network Operations Team",
+            "email_configuration": "Email Administration Team",
+            "software_installation": "Software Support Team",
+            "security_incident": "Security Response Team",
+            "policy_question": "IT Policy Team"
+        }
         
-        # Get self-help resources based on category
-        self_help_resources = self._get_self_help_resources(category)
+        team_name = category_to_team.get(category, "IT Support Team")
+        team_contact = category_to_contact.get(category, "support@techcorp.com")
+        
+        # Get resolution time from categories.json
+        category_resolution_times = {
+            "password_reset": "5-10 minutes",
+            "software_installation": "10-30 minutes",
+            "hardware_failure": "2-3 business days",
+            "network_connectivity": "15-45 minutes",
+            "email_configuration": "10-20 minutes",
+            "security_incident": "Immediate response",
+            "policy_question": "5-15 minutes"
+        }
+        
+        resolution_time = category_resolution_times.get(category, estimated_wait_time)
+        
+        # Log the escalation for debugging
+        logger.info(f"Escalating {category} request to {team_name} at {team_contact}")
         
         message = f"""
 I'm escalating your request to our {team_name} for specialized assistance.
@@ -162,62 +198,11 @@ This is due to: {reason}
 
 What happens next:
 1. A support specialist will review your request
-2. You should receive a response within {estimated_wait_time}
+2. You should receive a response within {resolution_time}
 3. You can contact the team directly at {team_contact}
-
-While you wait, you can check these resources for similar issues:
-{self_help_resources}
 
 Thank you for your patience.
 """
         
         return message
         
-    def _get_self_help_resources(self, category: str) -> str:
-        """
-        Get self-help resources based on the request category.
-        
-        Args:
-            category: Request category
-            
-        Returns:
-            str: Formatted self-help resources
-        """
-        # Map categories to self-help resources
-        category_resources = {
-            "hardware_failure": [
-                "Hardware Troubleshooting Guide: https://company.com/kb/hardware",
-                "Equipment Request Form: https://company.com/equipment"
-            ],
-            "security_incident": [
-                "Security Incident Reporting Portal: https://company.com/security",
-                "Security Best Practices: https://company.com/kb/security-best-practices"
-            ],
-            "network_connectivity": [
-                "Network Status Page: https://company.com/network-status",
-                "VPN Setup Guide: https://company.com/kb/vpn-setup"
-            ],
-            "software_installation": [
-                "Software Catalog: https://company.com/software",
-                "Installation Guides: https://company.com/kb/software-installation"
-            ],
-            "email_configuration": [
-                "Email Setup Guide: https://company.com/kb/email-setup",
-                "Distribution List Management: https://company.com/kb/distribution-lists"
-            ],
-            "password_reset": [
-                "Self-Service Password Reset: https://company.com/reset-password",
-                "Account Security Guide: https://company.com/kb/account-security"
-            ],
-            "policy_question": [
-                "IT Policy Portal: https://company.com/policies",
-                "Software Installation Policy: https://company.com/kb/software-policy"
-            ]
-        }
-        
-        resources = category_resources.get(category, [
-            "Knowledge Base: https://company.com/kb",
-            "IT Support Portal: https://company.com/support"
-        ])
-        
-        return "\n".join([f"- {resource}" for resource in resources])

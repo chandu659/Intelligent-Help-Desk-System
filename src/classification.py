@@ -188,7 +188,7 @@ class RequestClassifier:
         request_lower = request.lower()
         
         # Define keyword boosts for specific categories
-        keyword_boosts = {
+        keyword_boosts = {  
             "email_configuration": [
                 (0.15, ['distribution list', 'email', 'outlook', 'exchange', 'gmail', 'message', 'inbox'])
             ],

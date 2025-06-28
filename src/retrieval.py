@@ -253,12 +253,12 @@ class KnowledgeRetriever:
         
         return chunks
     
-    def _create_faiss_index(self) -> Tuple[faiss.IndexFlatIP, np.ndarray]:
+    def _create_faiss_index(self) -> Tuple[faiss.Index, np.ndarray]:
         """
         Create a FAISS index from document embeddings.
         
         Returns:
-            Tuple[faiss.IndexFlatIP, np.ndarray]: FAISS index and document embeddings
+            Tuple[faiss.Index, np.ndarray]: FAISS index and document embeddings
         """
         # Extract text from documents
         texts = [doc.text for doc in self.documents]
@@ -266,12 +266,17 @@ class KnowledgeRetriever:
         # Generate embeddings
         embeddings = self.model.encode(texts)
         
-        # Normalize embeddings for cosine similarity
-        faiss.normalize_L2(embeddings)
+        # Get dimension of embeddings
+        d = embeddings.shape[1]
         
-        # Create FAISS index
-        index = faiss.IndexFlatIP(embeddings.shape[1])
+        # Create FAISS index - using IndexFlatL2 for more accurate L2 distance search
+        # This avoids potential issues with explicit cosine similarity normalization
+        index = faiss.IndexFlatL2(d)
+        
+        # Add vectors to the index
         index.add(embeddings)
+        
+        logger.info(f"Created FAISS index with {len(texts)} vectors of dimension {d}")
         
         return index, embeddings
     
@@ -289,35 +294,75 @@ class KnowledgeRetriever:
         # Generate query embedding
         query_embedding = self.model.encode([query])
         
-        # Normalize for cosine similarity
-        faiss.normalize_L2(query_embedding)
+        # Search in FAISS index - using L2 distance (smaller is better)
+        # Note: With L2 distance, lower scores are better (unlike with cosine similarity)
+        distances, indices = self.index.search(query_embedding, top_k)
         
-        # Search in FAISS index
-        scores, indices = self.index.search(query_embedding, top_k)
+        # Get the retrieved documents and add similarity scores to metadata
+        retrieved_docs = []
+        for idx, distance in zip(indices[0], distances[0]):
+            doc = self.documents[idx]
+            # Create a new metadata dict with distance score (lower is better)
+            metadata = dict(doc.metadata)
+            # Convert distance to a similarity score (1 / (1 + distance)) so higher is better
+            similarity = 1.0 / (1.0 + float(distance))
+            metadata["similarity_score"] = similarity
+            metadata["distance"] = float(distance)
+            # Create a new document with the same text but updated metadata
+            new_doc = Document(text=doc.text, metadata=metadata)
+            retrieved_docs.append(new_doc)
         
-        # Get the retrieved documents
-        retrieved_docs = [self.documents[idx] for idx in indices[0]]
-        
-        logger.debug(f"Retrieved {len(retrieved_docs)} documents for query: {query[:50]}...")
+        # Enhanced logging to show exactly what's being retrieved
+        logger.info(f"Vector search retrieved {len(retrieved_docs)} documents for query: '{query}'")
+        for i, doc in enumerate(retrieved_docs):
+            source = doc.metadata.get("source", "unknown")
+            section = doc.metadata.get("section", "")
+            similarity = doc.metadata.get("similarity_score")
+            distance = doc.metadata.get("distance")
+            source_info = f"{source} - {section}" if section else source
+            logger.info(f"Retrieved doc {i+1}: {source_info} (similarity: {similarity:.4f}, distance: {distance:.4f})")
+            logger.info(f"Content: {doc.text[:200]}...")
         
         return retrieved_docs
     
-    def retrieve_by_category(self, query: str, category: str, top_k: int = 3) -> List[Document]:
+    def retrieve_by_category(self, query: str, category: str, top_k: int = 5) -> List[Document]:
         """
         Retrieve documents filtered by category.
         
         Args:
             query: Query text
             category: Category to filter by
-            top_k: Number of documents to retrieve
+            top_k: Number of documents to retrieve (default increased to 5 for better coverage)
             
         Returns:
             List[Document]: List of retrieved documents
         """
+        # Enhance query with keywords based on detected issues
+        enhanced_query = query
+        
+        # Add keyword boosting for permission-related queries
+        if "permission" in query.lower() or "privileges" in query.lower() or "access" in query.lower():
+            enhanced_query = f"{query} administrator privileges permission approval"
+            logger.info(f"Enhanced query with permission-related keywords: '{enhanced_query}'")
+            
+        # Add keyword boosting for network connectivity issues
+        if ("network" in query.lower() or "wifi" in query.lower() or "internet" in query.lower() or 
+            "connect" in query.lower() or "website" in query.lower() or "access" in query.lower()):
+            enhanced_query = f"{query} network connectivity wifi internet connection cable adapter driver"
+            logger.info(f"Enhanced query with network-related keywords: '{enhanced_query}'")
+            
+        # Add keyword boosting for security incidents
+        if ("security" in query.lower() or "hack" in query.lower() or "virus" in query.lower() or 
+            "malware" in query.lower() or "suspicious" in query.lower() or "pop-up" in query.lower() or 
+            "popup" in query.lower() or "breach" in query.lower() or "compromise" in query.lower()):
+            enhanced_query = f"{query} security incident response breach malware virus hacked compromised"
+            logger.info(f"Enhanced query with security-related keywords: '{enhanced_query}'") 
+        # Use the enhanced query for retrieval
+        query = enhanced_query
         # Map help desk categories to knowledge sources
         category_to_source = {
             "password_reset": ["knowledge_base", "company_policies"],
-            "software_installation": ["installation_guides", "troubleshooting_db"],
+            "software_installation": ["knowledge_base", "installation_guides", "troubleshooting_db"],
             "hardware_failure": ["troubleshooting_db", "knowledge_base"],
             "network_connectivity": ["troubleshooting_db", "knowledge_base"],
             "email_configuration": ["troubleshooting_db", "knowledge_base"],
@@ -335,21 +380,42 @@ class KnowledgeRetriever:
         # Generate query embedding
         query_embedding = self.model.encode([query])
         
-        # Normalize for cosine similarity
-        faiss.normalize_L2(query_embedding)
+        # Search in FAISS index - using L2 distance (smaller is better)
+        # Note: With L2 distance, lower scores are better (unlike with cosine similarity)
+        distances, indices = self.index.search(query_embedding, len(self.documents))
         
-        # Search in FAISS index
-        scores, indices = self.index.search(query_embedding, len(self.documents))
-        
-        # Filter by relevant sources
+        # Filter by relevant sources and add similarity scores to metadata
         filtered_docs = []
-        for idx in indices[0]:
+        
+        for i, idx in enumerate(indices[0]):
             doc = self.documents[idx]
             if doc.metadata.get("source") in relevant_sources:
-                filtered_docs.append(doc)
+                # Create a new metadata dict with distance score (lower is better)
+                metadata = dict(doc.metadata)
+                # Convert distance to a similarity score (1 / (1 + distance)) so higher is better
+                distance = float(distances[0][i])
+                similarity = 1.0 / (1.0 + distance)
+                metadata["similarity_score"] = similarity
+                metadata["distance"] = distance
+                # Create a new document with the same text but updated metadata
+                new_doc = Document(text=doc.text, metadata=metadata)
+                filtered_docs.append(new_doc)
                 if len(filtered_docs) >= top_k:
                     break
         
-        logger.debug(f"Retrieved {len(filtered_docs)} documents for query: {query[:50]}... in category: {category}")
+        # Enhanced logging for category-specific retrieval
+        logger.info(f"Vector search retrieved {len(filtered_docs)} documents for query: '{query}' in category: {category}")
+        logger.info(f"Relevant sources for category '{category}': {relevant_sources}")
+        
+        for i, doc in enumerate(filtered_docs):
+            source = doc.metadata.get("source", "unknown")
+            section = doc.metadata.get("section", "")
+            category_info = doc.metadata.get("category", "")
+            score = doc.metadata.get("similarity_score")
+            source_info = f"{source} - {section}" if section else source
+            source_info = f"{source_info} ({category_info})" if category_info else source_info
+            
+            logger.info(f"Retrieved doc {i+1}: {source_info} (similarity score: {score:.4f})")
+            logger.info(f"Content: {doc.text[:200]}...")
         
         return filtered_docs

@@ -93,26 +93,46 @@ async def process_help_request(request: HelpDeskRequest):
         category, confidence, category_details = classifier.classify(request.request_text)
         logger.debug(f"Request {request_id} classified as '{category}' with confidence {confidence:.4f}")
         
-        # Step 2: Check if the request should be escalated
-        should_escalate, escalation_reason = escalation_handler.should_escalate(
-            request.request_text, category, category_details, confidence
-        )
-        
-        # Step 3: Retrieve relevant knowledge
+        # Step 2: Retrieve relevant knowledge first
         retrieved_docs = retriever.retrieve_by_category(request.request_text, category)
+        
+        # Step 3: Check if the request should be escalated, passing retrieved docs
+        should_escalate, escalation_reason = escalation_handler.should_escalate(
+            request.request_text, category, category_details, confidence, retrieved_docs
+        )
         
         # Step 4: Generate response
         if should_escalate:
-            # Generate escalation message
-            response_text = escalation_handler.get_escalation_message(
-                category, escalation_reason
-            )
-            # Replace placeholder ticket ID with request ID
-            response_text = response_text.replace("{ticket_id}", request_id[:8].upper())
+            # Check if we have relevant knowledge base content to include
+            has_relevant_content = False
+            for doc in retrieved_docs:
+                if doc.metadata.get("similarity_score", 0) > 0.3:
+                    has_relevant_content = True
+                    break
+                    
+            if has_relevant_content:
+                # First generate a response based on the knowledge base
+                kb_response = response_generator.generate_response(
+                    request.request_text, category, category_details, retrieved_docs, escalated=True
+                )
+                
+                # Then get the escalation message
+                escalation_msg = escalation_handler.get_escalation_message(
+                    category, escalation_reason
+                )
+                
+                # Combine both responses
+                response_text = f"{kb_response}\n\n{escalation_msg}"
+                logger.info(f"Providing knowledge base content along with escalation message for {category}")
+            else:
+                # For cases without relevant content, just use the escalation message
+                response_text = escalation_handler.get_escalation_message(
+                    category, escalation_reason
+                )
         else:
             # Generate normal response
             response_text = response_generator.generate_response(
-                request.request_text, category, category_details, retrieved_docs
+                request.request_text, category, category_details, retrieved_docs, escalated=False
             )
         
         # Calculate processing time

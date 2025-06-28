@@ -31,12 +31,12 @@ API_DESCRIPTION = "AI-powered help desk for IT support"
 API_VERSION = "0.1.0"
 
 # LLM settings
-DEFAULT_LLM_MODEL = "llama3-70b-8192"  # Using Groq as provider based on requirements.txt
-LLM_TEMPERATURE = 0.2
-MAX_TOKENS = 1024
+DEFAULT_LLM_MODEL = "llama-3.1-8b-instant"  
+LLM_TEMPERATURE = 0.1
+MAX_TOKENS = 524
 
 # Escalation settings
-ESCALATION_THRESHOLD = 0.7  # Confidence threshold for escalation
+ESCALATION_THRESHOLD = 0.7 
 
 # Logging settings
 LOG_LEVEL = "INFO"
