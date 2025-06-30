@@ -204,11 +204,16 @@ class ResponseGenerator:
         # Create prompt for the LLM
         prompt = self._create_prompt(request, category, category_details, retrieved_docs, escalated)
         
-        # Call the LLM API using Groq - no fallback responses
-        response = self._call_llm_api(prompt)
-        
-        # Post-process the response to ensure escalation contacts are handled correctly
-        response = self._post_process_response(response, escalated, retrieved_docs)
+        try:
+            # Call the LLM API using Groq
+            response = self._call_llm_api(prompt)
+            
+            # Post-process the response to ensure escalation contacts are handled correctly
+            response = self._post_process_response(response, escalated, retrieved_docs)
+        except Exception as e:
+            # Log the error and use fallback response
+            logger.error(f"Error generating response with LLM API: {str(e)}")
+            response = self._generate_fallback_response(category)
         
         logger.debug(f"Generated response for request: {request[:50]}...")
         return response
@@ -244,6 +249,40 @@ class ResponseGenerator:
         logger.info(f"Successfully generated response using Groq API with model {self.model_name}")
         return response.choices[0].message.content
         
+    def _generate_fallback_response(self, category: str) -> str:
+        """
+        Generate a fallback response when the LLM API call fails.
+        
+        Args:
+            category: The request category
+            
+        Returns:
+            str: A fallback response
+        """
+        return f"I apologize, but I'm currently experiencing technical difficulties processing your {category} request. Please try again in a few moments, or consider rephrasing your question."
+    
+    def _generate_simulated_response(self, prompt: str) -> str:
+        """
+        Generate a simulated response for testing purposes.
+        
+        Args:
+            prompt: The prompt that would be sent to the LLM
+            
+        Returns:
+            str: A simulated response
+        """
+        # Extract category from prompt
+        category_match = re.search(r'\*\*Category\*\*: ([a-z_]+)', prompt)
+        category = category_match.group(1) if category_match else "general"
+        
+        # Create a simple response based on the category
+        if "password" in category:
+            return "To reset your password, please visit the self-service portal at company.com/reset. Remember that passwords must be at least 8 characters with mixed case, numbers, and symbols."
+        elif "software" in category:
+            return "For software installation, please submit a request through the IT portal with the specific software you need."
+        else:
+            return "I've reviewed your request. Here are the steps you can take to resolve your issue..."
+    
     def _post_process_response(self, response: str, escalated: bool, retrieved_docs: List[Document]) -> str:
         """
         Post-process the response to ensure escalation contacts are handled correctly

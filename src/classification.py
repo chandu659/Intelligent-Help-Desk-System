@@ -214,9 +214,11 @@ class RequestClassifier:
         
         # Apply boosts based on keywords
         for category, boost_rules in keyword_boosts.items():
-            for boost_value, keywords in boost_rules:
-                if any(keyword in request_lower for keyword in keywords):
-                    scores[category] += boost_value
+            # Only apply boost if the category exists in scores
+            if category in scores:
+                for boost_value, keywords in boost_rules:
+                    if any(keyword in request_lower for keyword in keywords):
+                        scores[category] += boost_value
                     
         return scores
     

@@ -40,11 +40,16 @@ class TestRequestClassifier(unittest.TestCase):
         # Mock encode method to return predictable embeddings
         def mock_encode(texts):
             if isinstance(texts, list):
-                # For category embeddings
-                if "password" in texts[0].lower():
-                    return [[1.0, 0.0]]
-                elif "software" in texts[0].lower():
-                    return [[0.0, 1.0]]
+                # For category embeddings - return an embedding for each text
+                result = []
+                for text in texts:
+                    if "password" in text.lower():
+                        result.append([1.0, 0.0])
+                    elif "software" in text.lower():
+                        result.append([0.0, 1.0])
+                    else:
+                        result.append([0.5, 0.5])
+                return result
             else:
                 # For request embedding
                 if "password" in texts.lower():

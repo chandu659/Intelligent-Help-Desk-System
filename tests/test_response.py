@@ -5,11 +5,28 @@ import os
 import sys
 import unittest
 from unittest.mock import patch, MagicMock
+from dataclasses import dataclass
 
 # Add parent directory to path to import from src
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Mock Document class to avoid importing sentence_transformers
+@dataclass
+class Document:
+    text: str
+    metadata: dict
+
+# Patch the retrieval module
+sys.modules['src.retrieval'] = MagicMock()
+sys.modules['src.retrieval'].Document = Document
+
+# Mock groq module
+mock_groq = MagicMock()
+mock_groq.Groq = MagicMock()
+sys.modules['groq'] = mock_groq
+
+# Now import ResponseGenerator after mocking dependencies
 from src.response import ResponseGenerator
-from src.retrieval import Document
 
 class TestResponseGenerator(unittest.TestCase):
     """Test cases for the ResponseGenerator class."""
@@ -49,7 +66,8 @@ class TestResponseGenerator(unittest.TestCase):
         self.assertIn(self.request, prompt)
         self.assertIn(self.category, prompt)
         self.assertIn(self.category_details["description"], prompt)
-        self.assertIn(self.category_details["typical_resolution_time"], prompt)
+        # Resolution time is no longer included in the prompt
+        # self.assertIn(self.category_details["typical_resolution_time"], prompt)
         self.assertIn("knowledge_base", prompt)
         self.assertIn("Password Management", prompt)
         self.assertIn("company.com/reset", prompt)

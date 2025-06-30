@@ -89,7 +89,7 @@ class EscalationHandler:
         
         # Check for urgency indicators
         urgency_indicators = [
-            "urgent", "emergency", "immediately", "asap", "critical",
+            "urgent", "urgently", "emergency", "immediately", "asap", "critical",
             "deadline", "tomorrow", "today", "right now", "can't wait"
         ]
         for indicator in urgency_indicators:
