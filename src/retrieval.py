@@ -270,7 +270,6 @@ class KnowledgeRetriever:
         d = embeddings.shape[1]
         
         # Create FAISS index - using IndexFlatL2 for more accurate L2 distance search
-        # This avoids potential issues with explicit cosine similarity normalization
         index = faiss.IndexFlatL2(d)
         
         # Add vectors to the index
@@ -304,7 +303,6 @@ class KnowledgeRetriever:
             doc = self.documents[idx]
             # Create a new metadata dict with distance score (lower is better)
             metadata = dict(doc.metadata)
-            # Convert distance to a similarity score (1 / (1 + distance)) so higher is better
             similarity = 1.0 / (1.0 + float(distance))
             metadata["similarity_score"] = similarity
             metadata["distance"] = float(distance)
@@ -381,7 +379,6 @@ class KnowledgeRetriever:
         query_embedding = self.model.encode([query])
         
         # Search in FAISS index - using L2 distance (smaller is better)
-        # Note: With L2 distance, lower scores are better (unlike with cosine similarity)
         distances, indices = self.index.search(query_embedding, len(self.documents))
         
         # Filter by relevant sources and add similarity scores to metadata
@@ -390,9 +387,9 @@ class KnowledgeRetriever:
         for i, idx in enumerate(indices[0]):
             doc = self.documents[idx]
             if doc.metadata.get("source") in relevant_sources:
-                # Create a new metadata dict with distance score (lower is better)
+                # Create a new metadata dict with distance score
                 metadata = dict(doc.metadata)
-                # Convert distance to a similarity score (1 / (1 + distance)) so higher is better
+                # Convert distance to a similarity score 
                 distance = float(distances[0][i])
                 similarity = 1.0 / (1.0 + distance)
                 metadata["similarity_score"] = similarity
